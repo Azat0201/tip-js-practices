@@ -347,13 +347,56 @@ check("35. Работа с другим набором, без зависимо�
   assert.deepEqual(tasks, before);
 });
 
-// Три собственных проверки можно добавить здесь, до итогового вывода,
-// либо выполнить отдельно и описать в отчёте. Общие проверки удалять не нужно.
-// Пример формы записи (не готовая проверка задания):
-// check("Собственный случай: ...", () => {
-//   const result = ...;
-//   assert.deepEqual(result, ...);
-// });
+check("36. Добавление после удаления", () => {
+  const tasks = [
+    { id: 14, title: "крутой", completed: false, priority: "low" },
+    { id: 67, title: "простой", completed: true, priority: "high" },
+  ];
+  const before = copyTasks(tasks);
+  const next = expectTasks(removeTask(tasks, 67));
+  assert.deepEqual(next.map((task) => task.id), [14]);
+  assert.deepEqual(next, [tasks[0]]);
+  assert.notEqual(next, tasks);
+  assert.deepEqual(tasks, before);
+  const restored = expectTasks(addTask(next, 88, "  Задача "));
+  assert.notEqual(restored, tasks);
+  assert.notEqual(restored, next);
+  assert.deepEqual(restored.map((task) => task.id), [14, 88]);
+  assert.deepEqual(restored[1], { id: 88, title: "Задача", completed: false, priority: "medium" });
+});
+
+check("37. Изменение первой и последней записи", () => {
+  const tasks = fixture();
+  const next = expectTasks(renameTask(tasks, 1, "новое название  "));
+  assert.deepEqual(next[0], { ...tasks[0], title: "новое название" });
+  assert.notEqual(next, tasks);
+  assert.notEqual(next[0], tasks[0]);
+  assert.deepEqual(tasks, fixture());
+  const same = expectTasks(renameTask(next, 10, " другое название"));
+  assert.deepEqual(same[3], { ...tasks[3], title: "другое название" });
+  assert.notEqual(same, tasks);
+  assert.notEqual(same[3], tasks[3]);
+  assert.deepEqual(tasks, fixture());
+});
+
+check("38. Последовательное обновлений нескольких задач", () => {
+  const tasks = fixture();
+  const next = expectTasks(setTaskCompleted(tasks, 4, true));
+  assert.deepEqual(next[1], { ...tasks[1], completed: true });
+  assert.notEqual(next, tasks);
+  assert.notEqual(next[1], tasks[1]);
+  assert.deepEqual(tasks, fixture());
+  const restored = expectTasks(setTaskCompleted(next, 7, true));
+  assert.deepEqual(restored[2], { ...next[2], completed: true });
+  assert.notEqual(restored, next);
+  assert.notEqual(restored[2], next[2]);
+  assert.deepEqual(tasks, fixture());
+  const after = expectTasks(setTaskCompleted(restored, 1, false));
+  assert.deepEqual(after[0], { ...restored[0], completed: false });
+  assert.notEqual(after, restored);
+  assert.notEqual(after[0], restored[0]);
+  assert.deepEqual(tasks, fixture());
+});
 
 console.log(`\nПроверок пройдено: ${passed}; не пройдено: ${failed}.`);
 if (failed > 0) {
